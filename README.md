@@ -1,56 +1,52 @@
 # VideosCortador
 
-Aplicación local con interfaz web para cortar videos **sin pérdida de calidad** usando FFmpeg (`-c copy`).
+App local con interfaz web para **cortar videos sin pérdida de calidad** usando FFmpeg (`-c copy`). Sube un video, elige los puntos de inicio y fin, y genera el corte junto al archivo original.
+
+> Guía detallada de instalación por sistema operativo: [installation.md](installation.md)
 
 ## Requisitos
 
-1. **Python 3.9+**
-2. **FFmpeg** (incluye `ffmpeg` y `ffprobe`) instalado y en el PATH del sistema.
+- **Python 3.9+**
+- **FFmpeg** (incluye `ffmpeg` y `ffprobe`)
 
-## Instalación
+## Instalación rápida
 
+1. **Clonar el repo**
 ```bash
-cd C:\Users\yamil\Desktop\videoscortador
-python -m venv .venv
-.venv\Scripts\activate          # En Windows
-# source .venv/bin/activate      # En macOS/Linux
-pip install -r requirements.txt
+git clone https://github.com/srllamadev/ZeroLoss-Video-Cutter.git
+cd videoscortador
 ```
 
-## Instalar FFmpeg
+2. **Instalar FFmpeg**
+- Windows: `winget install Gyan.FFmpeg`
+- macOS: `brew install ffmpeg`
+- Linux: `sudo apt install -y ffmpeg`
 
-### Windows
-- Opción rápida: `winget install Gyan.FFmpeg`
-- O manual: descarga desde https://www.gyan.dev/ffmpeg/builds/ → extrae y agrega la carpeta `bin` al PATH.
-
-### macOS
+3. **Crear entorno virtual e instalar dependencias**
 ```bash
-brew install ffmpeg
-```
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-### Linux (Debian/Ubuntu)
-```bash
-sudo apt update && sudo apt install -y ffmpeg
-```
-
-Verifica con:
-```bash
-ffmpeg -version
-ffprobe -version
+python -m pip install -r requirements.txt
 ```
 
 ## Ejecutar
 
+**Windows (doble clic):** abre `iniciar_app.bat`
+
+**Manual (cualquier SO):**
 ```bash
 python app.py
 ```
 
-Abre en el navegador: **http://127.0.0.1:5000**
+Abrir en el navegador: **http://127.0.0.1:8000**
 
 ## Uso
 
-1. Arrastra el video a la zona punteada o usa **Seleccionar video**.
-2. Mueve los dos controles del slider o escribe minutos/segundos.
-3. Pulsa **Cortar video** → el corte se guarda junto al original como `video_cut_1.mp4`, `video_cut_2.mp4`, etc.
-4. En la tarjeta de éxito: **Ver archivo** abre el resultado en el reproductor por defecto; **Ver carpeta** lo resalta en el explorador.
-5. **Otra tarea** limpia el estado para empezar de cero.
+1. Arrastra el video o usa **Seleccionar video**.
+2. Mueve los sliders o escribe minutos/segundos.
+3. Pulsa **Cortar video** → se guarda como `video_cut_1.mp4`, `video_cut_2.mp4`, etc., junto al original.
+4. **Ver archivo** abre el resultado · **Ver carpeta** lo resalta en el explorador.

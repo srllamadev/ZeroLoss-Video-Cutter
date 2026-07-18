@@ -45,7 +45,7 @@ if errorlevel 1 (
     echo.
     echo [ERROR] No se encontro Python en el sistema.
     echo         Instalalo desde https://www.python.org/downloads/
-    echo         (marca "Add Python to PATH" durante la instalacion).
+    echo         ^(marca "Add Python to PATH" durante la instalacion^).
     echo.
     pause
     exit /b 1
@@ -77,7 +77,7 @@ echo [4/5] Activando entorno virtual...
 call venv\Scripts\activate.bat
 echo       Instalando dependencias (silencioso)...
 python -m pip install --quiet --upgrade pip >nul 2>nul
-pip install --quiet -r requirements.txt
+python -m pip install --quiet -r requirements.txt
 if errorlevel 1 (
     echo [ERROR] Fallo la instalacion de dependencias.
     pause
@@ -89,10 +89,10 @@ echo.
 REM ------------------------------------------------------------
 REM 5. Abrir navegador y arrancar el servidor Flask
 REM ------------------------------------------------------------
-echo [5/5] Arrancando servidor Flask en http://127.0.0.1:5000 ...
+echo [5/5] Arrancando servidor Flask en http://127.0.0.1:8000 ...
 
 REM Abre el navegador despues de 2 segundos sin bloquear la consola
-start "" /b cmd /c "timeout /t 2 /nobreak >nul && start """" http://127.0.0.1:5000"
+start "" /b cmd /c "timeout /t 2 /nobreak >nul && start """" http://127.0.0.1:8000"
 
 echo.
 echo ===================================================

@@ -1,0 +1,43 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Archivos subidos por la app
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Entorno / variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+nul
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
