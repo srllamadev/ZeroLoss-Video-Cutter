@@ -127,6 +127,14 @@ def cut():
     except FileNotFoundError:
         return jsonify({"error": "FFmpeg no está instalado en el sistema."}), 500
 
+    # El corte fue exitoso: eliminamos el original de uploads/
+    # para no duplicar espacio en disco. Solo queda el recortado.
+    try:
+        if os.path.exists(src_path) and os.path.abspath(src_path) != os.path.abspath(out_path):
+            os.remove(src_path)
+    except OSError:
+        pass
+
     return jsonify({
         "output_path": out_path,
         "output_name": out_name,
@@ -189,4 +197,4 @@ def clean():
 if __name__ == "__main__":
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         print("ADVERTENCIA: FFmpeg/ffprobe no encontrados en PATH.")
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    app.run(host="127.0.0.1", port=8012, debug=True)

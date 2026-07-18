@@ -42,7 +42,7 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Abrir en el navegador: **http://127.0.0.1:8000**
+Abrir en el navegador: **http://127.0.0.1:8012**
 
 ## Uso
 

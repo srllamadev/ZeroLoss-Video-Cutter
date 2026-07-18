@@ -89,10 +89,10 @@ echo.
 REM ------------------------------------------------------------
 REM 5. Abrir navegador y arrancar el servidor Flask
 REM ------------------------------------------------------------
-echo [5/5] Arrancando servidor Flask en http://127.0.0.1:8000 ...
+echo [5/5] Arrancando servidor Flask en http://127.0.0.1:8012 ...
 
 REM Abre el navegador despues de 2 segundos sin bloquear la consola
-start "" /b cmd /c "timeout /t 2 /nobreak >nul && start """" http://127.0.0.1:8000"
+start "" /b cmd /c "timeout /t 2 /nobreak >nul && start """" http://127.0.0.1:8012"
 
 echo.
 echo ===================================================
