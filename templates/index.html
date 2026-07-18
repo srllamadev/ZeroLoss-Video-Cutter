@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VideosCortador — Corte sin pérdida</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; }
+    .dropzone.dragover { background-color: rgba(99,102,241,0.15); border-color: #6366f1; transform: scale(1.01); }
+    .range-track { position: relative; height: 44px; }
+    .range-connect { position:absolute; height: 6px; background: linear-gradient(90deg,#6366f1,#8b5cf6); top: 19px; border-radius: 9999px; }
+    input[type=range].dual { position:absolute; top: 10px; left:0; right:0; pointer-events:none; -webkit-appearance:none; background:transparent; height: 24px; margin:0; }
+    input[type=range].dual::-webkit-slider-thumb { pointer-events:auto; -webkit-appearance:none; width: 24px; height: 24px; border-radius:50%; background:#fff; border: 3px solid #6366f1; box-shadow:0 2px 6px rgba(0,0,0,.3); cursor: pointer; }
+    input[type=range].dual::-moz-range-thumb { pointer-events:auto; width: 24px; height: 24px; border-radius:50%; background:#fff; border:3px solid #6366f1; box-shadow:0 2px 6px rgba(0,0,0,.3); cursor:pointer; }
+    .loader { border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #fff; border-radius:50%; width: 56px; height: 56px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+  <div id="app" class="w-full max-w-4xl transition-all duration-300">
+    <!-- Header -->
+    <div class="mb-8 text-center">
+      <h1 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">VideosCortador</h1>
+      <p class="text-slate-400 mt-2">Cortes instantáneos sin pérdida de calidad con FFmpeg (<code>-c copy</code>)</p>
+    </div>
+
+    <!-- DROPZONE -->
+    <div id="dropzone" class="dropzone border-2 border-dashed border-slate-600 rounded-2xl p-12 text-center cursor-pointer hover:border-indigo-500 transition-all duration-200">
+      <input type="file" id="fileInput" accept="video/*" class="hidden" />
+      <svg class="mx-auto h-20 w-20 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.9 5 5 0 019.9-1.06A3.5 3.5 0 1117 16M9 13l3-3m0 0l3 3m-3-3v9"/>
+      </svg>
+      <p class="mt-4 text-lg text-slate-300">Arrastra y suelta tu video aquí</p>
+      <p class="text-sm text-slate-500 mb-4">o</p>
+      <button id="selectBtn" type="button" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition shadow-lg shadow-indigo-600/30">
+        Seleccionar video
+      </button>
+    </div>
+
+    <!-- PREVIEW + CORTADOR -->
+    <div id="editor" class="hidden mt-6 bg-slate-800/60 backdrop-blur rounded-2xl p-6 border border-slate-700">
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="md:w-1/2">
+          <video id="videoPreview" class="w-full rounded-xl bg-black" controls></video>
+          <p id="fileName" class="mt-2 text-sm text-slate-400 truncate"></p>
+        </div>
+        <div class="md:w-1/2 flex flex-col">
+          <h2 class="text-lg font-semibold mb-4">Selecciona el rango de corte</h2>
+
+          <!-- Slider dual -->
+          <div class="range-track mb-6">
+            <div class="absolute left-0 right-0 top-[19px] h-1.5 bg-slate-600 rounded-full"></div>
+            <div id="rangeConnect" class="range-connect"></div>
+            <input type="range" id="rangeStart" class="dual" min="0" max="100" step="0.01" value="0" />
+            <input type="range" id="rangeEnd" class="dual" min="0" max="100" step="0.01" value="100" />
+          </div>
+
+          <!-- Inputs numéricos -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-900/60 rounded-lg p-3">
+              <label class="text-xs uppercase text-slate-400">Inicio</label>
+              <div class="flex gap-2 mt-1">
+                <input id="startMin" type="number" min="0" value="0" class="w-16 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
+                <span class="self-center">m</span>
+                <input id="startSec" type="number" min="0" step="0.01" value="0" class="w-20 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
+                <span class="self-center">s</span>
+              </div>
+            </div>
+            <div class="bg-slate-900/60 rounded-lg p-3">
+              <label class="text-xs uppercase text-slate-400">Fin</label>
+              <div class="flex gap-2 mt-1">
+                <input id="endMin" type="number" min="0" value="0" class="w-16 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
+                <span class="self-center">m</span>
+                <input id="endSec" type="number" min="0" step="0.01" value="0" class="w-20 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
+                <span class="self-center">s</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-sm text-slate-400 mb-4">
+            Duración total: <span id="durLabel" class="font-mono text-slate-200"></span>
+            <span class="mx-2">|</span>
+            Duración del corte: <span id="cutDurLabel" class="font-mono text-indigo-300"></span>
+          </div>
+
+          <div class="flex gap-3 mt-auto">
+            <button id="cutBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-lg font-semibold transition shadow-lg shadow-purple-600/30">
+              ✂ Cortar video
+            </button>
+            <button id="resetBtn" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
+              Otra tarea
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY MODAL -->
+  <div id="overlay" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="modalCard" class="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+      <!-- Loading state -->
+      <div id="modalLoading">
+        <div class="loader mx-auto"></div>
+        <h2 class="text-xl font-bold mt-4">Procesando corte…</h2>
+        <p class="text-slate-400 mt-2 text-sm">Ejecutando FFmpeg con <code>-c copy</code></p>
+      </div>
+      <!-- Success state -->
+      <div id="modalSuccess" class="hidden">
+        <div class="mx-auto h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
+          <svg class="h-10 w-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold">¡Corte completado!</h2>
+        <p id="resultName" class="text-slate-400 mt-2 text-sm break-all"></p>
+        <p id="resultRange" class="text-slate-500 mt-1 text-xs"></p>
+        <div class="flex gap-3 mt-6">
+          <button id="viewFileBtn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition">▶ Ver archivo</button>
+          <button id="viewFolderBtn" class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">📁 Ver carpeta</button>
+        </div>
+        <button id="modalCloseBtn" class="mt-4 text-sm text-slate-400 hover:text-slate-200 underline">Cerrar</button>
+      </div>
+      <!-- Error state -->
+      <div id="modalError" class="hidden">
+        <div class="mx-auto h-16 w-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+          <svg class="h-10 w-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold">Error</h2>
+        <p id="errorMsg" class="text-slate-400 mt-2 text-sm break-all"></p>
+        <button id="errorCloseBtn" class="mt-6 px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const dropzone = $('dropzone');
+    const fileInput = $('fileInput');
+    const selectBtn = $('selectBtn');
+    const editor = $('editor');
+    const video = $('videoPreview');
+    const fileName = $('fileName');
+    const durLabel = $('durLabel');
+    const cutDurLabel = $('cutDurLabel');
+    const rangeStart = $('rangeStart');
+    const rangeEnd = $('rangeEnd');
+    const rangeConnect = $('rangeConnect');
+    const startMin = $('startMin'), startSec = $('startSec');
+    const endMin = $('endMin'), endSec = $('endSec');
+    const cutBtn = $('cutBtn');
+    const resetBtn = $('resetBtn');
+    const overlay = $('overlay');
+    const modalLoading = $('modalLoading');
+    const modalSuccess = $('modalSuccess');
+    const modalError = $('modalError');
+
+    let state = { path: null, name: null, duration: 0, start: 0, end: 0, outputPath: null, outputName: null };
+
+    const fmt = (s) => {
+      const m = Math.floor(s/60);
+      const sec = (s - m*60).toFixed(2);
+      return `${m}:${sec.padStart(5,'0')}`;
+    };
+
+    function updateTrackVisuals() {
+      const min = parseFloat(rangeStart.min), max = parseFloat(rangeStart.max);
+      const s = parseFloat(rangeStart.value), e = parseFloat(rangeEnd.value);
+      const left = ((s - min) / (max - min)) * 100;
+      const right = ((e - min) / (max - min)) * 100;
+      rangeConnect.style.left = left + '%';
+      rangeConnect.style.width = (right - left) + '%';
+    }
+
+    function clampEnd() {
+      if (parseFloat(rangeStart.value) > parseFloat(rangeEnd.value) - 0.05) {
+        rangeStart.value = (parseFloat(rangeEnd.value) - 0.05).toFixed(2);
+      }
+    }
+    function clampStart() {
+      if (parseFloat(rangeEnd.value) < parseFloat(rangeStart.value) + 0.05) {
+        rangeEnd.value = (parseFloat(rangeStart.value) + 0.05).toFixed(2);
+      }
+    }
+
+    function setInputFromSlider() {
+      state.start = parseFloat(rangeStart.value);
+      state.end = parseFloat(rangeEnd.value);
+      startMin.value = Math.floor(state.start/60);
+      startSec.value = (state.start - Math.floor(state.start/60)*60).toFixed(2);
+      endMin.value = Math.floor(state.end/60);
+      endSec.value = (state.end - Math.floor(state.end/60)*60).toFixed(2);
+      cutDurLabel.textContent = fmt(state.end - state.start);
+      updateTrackVisuals();
+    }
+
+    function setSliderFromInput() {
+      const s = Math.max(0, (parseInt(startMin.value||0))*60 + parseFloat(startSec.value||0));
+      const e = Math.min(state.duration, (parseInt(endMin.value||0))*60 + parseFloat(endSec.value||0));
+      if (e <= s) { return; }
+      rangeStart.value = s;
+      rangeEnd.value = e;
+      setInputFromSlider();
+    }
+
+    rangeStart.addEventListener('input', () => { clampEnd(); setInputFromSlider(); video.currentTime = parseFloat(rangeStart.value); });
+    rangeEnd.addEventListener('input', () => { clampStart(); setInputFromSlider(); video.currentTime = parseFloat(rangeEnd.value); });
+
+    [startMin, startSec].forEach(el => el.addEventListener('input', setSliderFromInput));
+    [endMin, endSec].forEach(el => el.addEventListener('input', setSliderFromInput));
+
+    dropzone.addEventListener('click', (e) => {
+      if (e.target.id === 'selectBtn' || e.target.closest('#selectBtn')) return;
+      fileInput.click();
+    });
+    selectBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    fileInput.addEventListener('change', (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+    ['dragenter','dragover'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove('dragover'); }));
+    dropzone.addEventListener('drop', (e) => {
+      const f = e.dataTransfer.files[0];
+      if (f) handleFile(f);
+    });
+
+    async function handleFile(file) {
+      if (!file.type.startsWith('video/') && !/\.(mp4|mkv|mov|avi|webm|flv|mpg|mpeg|m4v|ts)$/i.test(file.name)) {
+        alert('Selecciona un archivo de video válido.');
+        return;
+      }
+      overlay.classList.remove('hidden');
+      showLoadingState('Subiendo video…');
+      const fd = new FormData();
+      fd.append('video', file);
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al subir');
+        state.path = data.path;
+        state.name = data.name;
+        state.duration = data.duration;
+        state.start = 0;
+        state.end = data.duration;
+
+        video.src = '/uploads/' + encodeURIComponent(data.id) + '#t=0.1';
+        fileName.textContent = data.name;
+        durLabel.textContent = fmt(state.duration);
+
+        rangeStart.min = 0; rangeStart.max = state.duration; rangeStart.step = 0.01;
+        rangeEnd.min = 0; rangeEnd.max = state.duration; rangeEnd.step = 0.01;
+        rangeStart.value = 0;
+        rangeEnd.value = state.duration;
+
+        endMin.value = Math.floor(state.end/60);
+        endSec.value = (state.end - Math.floor(state.end/60)*60).toFixed(2);
+        startMin.value = 0; startSec.value = 0;
+
+        cutDurLabel.textContent = fmt(state.end - state.start);
+        updateTrackVisuals();
+
+        dropzone.classList.add('hidden');
+        editor.classList.remove('hidden');
+        hideOverlay();
+      } catch (err) {
+        showErrorState(err.message);
+      }
+    }
+
+    cutBtn.addEventListener('click', async () => {
+      setSliderFromInput();
+      if (state.end - state.start < 0.1) { alert('El rango es muy pequeño.'); return; }
+      overlay.classList.remove('hidden');
+      showLoadingState('Cortando video…');
+      try {
+        const res = await fetch('/cut', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ path: state.path, start: state.start, end: state.end })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al cortar');
+        state.outputPath = data.output_path;
+        state.outputName = data.output_name;
+        showSuccessState(data);
+      } catch (err) {
+        showErrorState(err.message);
+      }
+    });
+
+    function showLoadingState(msg) {
+      modalLoading.classList.remove('hidden');
+      modalSuccess.classList.add('hidden');
+      modalError.classList.add('hidden');
+      modalLoading.querySelector('h2').textContent = msg;
+    }
+    function showSuccessState(data) {
+      modalLoading.classList.add('hidden');
+      modalSuccess.classList.remove('hidden');
+      modalError.classList.add('hidden');
+      $('resultName').textContent = data.output_name;
+      $('resultRange').textContent = `De ${fmt(data.start)} a ${fmt(data.end)}`;
+    }
+    function showErrorState(msg) {
+      modalLoading.classList.add('hidden');
+      modalSuccess.classList.add('hidden');
+      modalError.classList.remove('hidden');
+      $('errorMsg').textContent = msg;
+    }
+    function hideOverlay() { overlay.classList.add('hidden'); }
+
+    $('viewFileBtn').addEventListener('click', () => fetch('/open-file', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:state.outputPath})}));
+    $('viewFolderBtn').addEventListener('click', () => fetch('/open-folder', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:state.outputPath})}));
+    $('modalCloseBtn').addEventListener('click', hideOverlay);
+    $('errorCloseBtn').addEventListener('click', hideOverlay);
+
+    resetBtn.addEventListener('click', async () => {
+      await fetch('/clean', {method:'POST'}).catch(()=>{});
+      state = { path: null, name: null, duration: 0, start: 0, end: 0, outputPath: null, outputName: null };
+      video.src = '';
+      editor.classList.add('hidden');
+      dropzone.classList.remove('hidden');
+      hideOverlay();
+    });
+
+    updateTrackVisuals();
+  </script>
+</body>
+</html>
