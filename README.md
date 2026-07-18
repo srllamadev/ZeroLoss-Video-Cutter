@@ -1,6 +1,8 @@
 # ZeroLoss-Video-Cutter
 
-A local application with a web interface for **cutting videos without quality loss** using FFmpeg (`-c copy`). Upload a video, select the start and end points, and generate the trimmed video next to the original file.
+A local application with a web interface for **cutting videos without quality loss** using FFmpeg (`-c copy`). 
+![Descripción de la imagen](img/imagen4.png)
+Upload a video, select the start and end points, and generate the trimmed video next to the original file.
 
 > Detailed installation guide for each operating system: [installation.md](installation.md)
 
