@@ -39,7 +39,7 @@ venv\Scripts\activate
 python app.py
 ```
 
-Abrir: **http://127.0.0.1:8012**
+Abrir: **http://127.0.0.1:8013**
 
 ---
 
@@ -73,7 +73,7 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Abrir: **http://127.0.0.1:8012**
+Abrir: **http://127.0.0.1:8013**
 
 ---
 
@@ -108,7 +108,7 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-Abrir: **http://127.0.0.1:8012**
+Abrir: **http://127.0.0.1:8013**
 
 ---
 

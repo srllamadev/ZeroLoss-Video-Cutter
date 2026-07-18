@@ -197,4 +197,4 @@ def clean():
 if __name__ == "__main__":
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         print("ADVERTENCIA: FFmpeg/ffprobe no encontrados en PATH.")
-    app.run(host="127.0.0.1", port=8012, debug=True)
+    app.run(host="127.0.0.1", port=8013, debug=True)
