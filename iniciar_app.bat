@@ -1,16 +1,16 @@
 @echo off
 REM ============================================================
-REM  VideosCortador - Lanzador automatico (doble clic)
+REM  ZeroLoss-Video-Cutter - Lanzador automatico (doble clic)
 REM  Verifica FFmpeg, crea/activa venv, instala deps, arranca
 REM  el servidor Flask y abre el navegador por defecto.
 REM ============================================================
-title VideosCortador - Servidor local
+title ZeroLoss-Video-Cutter - Servidor local
 chcp 65001 >nul
 cd /d "%~dp0"
 
 echo.
 echo ===================================================
-echo   VideosCortador :: Iniciando aplicacion local
+echo   ZeroLoss-Video-Cutter :: Iniciando aplicacion local
 echo ===================================================
 echo.
 

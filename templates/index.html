@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VideosCortador — Corte sin pérdida</title>
+  <title>ZeroLoss-Video-Cutter — Lossless cutting</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, sans-serif; }
@@ -19,11 +19,18 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
 
+  <!-- Language switcher -->
+  <button id="langBtn" type="button" title="Switch language"
+    class="fixed top-4 right-4 z-50 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg text-sm font-semibold transition shadow-lg">
+    <span id="langFlag">🇪🇸</span>
+    <span id="langLabel">ES</span>
+  </button>
+
   <div id="app" class="w-full max-w-4xl transition-all duration-300">
     <!-- Header -->
     <div class="mb-8 text-center">
-      <h1 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">VideosCortador</h1>
-      <p class="text-slate-400 mt-2">Cortes instantáneos sin pérdida de calidad con FFmpeg (<code>-c copy</code>)</p>
+      <h1 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">ZeroLoss-Video-Cutter</h1>
+      <p class="text-slate-400 mt-2"><span data-i18n="subtitle">instant lossless cuts with FFmpeg (<code>-c copy</code>)</span></p>
     </div>
 
     <!-- DROPZONE -->
@@ -32,10 +39,10 @@
       <svg class="mx-auto h-20 w-20 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.9 5 5 0 019.9-1.06A3.5 3.5 0 1117 16M9 13l3-3m0 0l3 3m-3-3v9"/>
       </svg>
-      <p class="mt-4 text-lg text-slate-300">Arrastra y suelta tu video aquí</p>
-      <p class="text-sm text-slate-500 mb-4">o</p>
+      <p class="mt-4 text-lg text-slate-300"><span data-i18n="dropzone_hint">Drag and drop your video here</span></p>
+      <p class="text-sm text-slate-500 mb-4"><span data-i18n="or">or</span></p>
       <button id="selectBtn" type="button" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition shadow-lg shadow-indigo-600/30">
-        Seleccionar video
+        <span data-i18n="select_video">Select video</span>
       </button>
     </div>
 
@@ -47,7 +54,7 @@
           <p id="fileName" class="mt-2 text-sm text-slate-400 truncate"></p>
         </div>
         <div class="md:w-1/2 flex flex-col">
-          <h2 class="text-lg font-semibold mb-4">Selecciona el rango de corte</h2>
+          <h2 class="text-lg font-semibold mb-4" data-i18n="select_range">Select the cut range</h2>
 
           <!-- Slider dual -->
           <div class="range-track mb-6">
@@ -60,7 +67,7 @@
           <!-- Inputs numéricos -->
           <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-slate-900/60 rounded-lg p-3">
-              <label class="text-xs uppercase text-slate-400">Inicio</label>
+              <label class="text-xs uppercase text-slate-400" data-i18n="start">Start</label>
               <div class="flex gap-2 mt-1">
                 <input id="startMin" type="number" min="0" value="0" class="w-16 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
                 <span class="self-center">m</span>
@@ -69,7 +76,7 @@
               </div>
             </div>
             <div class="bg-slate-900/60 rounded-lg p-3">
-              <label class="text-xs uppercase text-slate-400">Fin</label>
+              <label class="text-xs uppercase text-slate-400" data-i18n="end">End</label>
               <div class="flex gap-2 mt-1">
                 <input id="endMin" type="number" min="0" value="0" class="w-16 bg-slate-800 rounded px-2 py-1 text-center border border-slate-700" />
                 <span class="self-center">m</span>
@@ -80,17 +87,32 @@
           </div>
 
           <div class="text-sm text-slate-400 mb-4">
-            Duración total: <span id="durLabel" class="font-mono text-slate-200"></span>
+            <span data-i18n="total_duration">Total duration:</span> <span id="durLabel" class="font-mono text-slate-200"></span>
             <span class="mx-2">|</span>
-            Duración del corte: <span id="cutDurLabel" class="font-mono text-indigo-300"></span>
+            <span data-i18n="cut_duration">Cut duration:</span> <span id="cutDurLabel" class="font-mono text-indigo-300"></span>
+          </div>
+
+          <div class="mb-5">
+            <label class="block text-xs uppercase text-slate-400 mb-2" data-i18n="cut_mode">Cut mode</label>
+            <div class="flex gap-6 bg-slate-900/60 rounded-lg p-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="cutMode" value="lossless" checked class="accent-indigo-500" />
+                <span class="text-sm" data-i18n="mode_lossless">Fast (lossless)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="cutMode" value="precise" class="accent-indigo-500" />
+                <span class="text-sm" data-i18n="mode_precise">Precise (re-encodes)</span>
+              </label>
+            </div>
+            <p id="modeHint" class="text-xs text-slate-500 mt-2" data-i18n="mode_hint">Fast: cuts at keyframes (may include a few extra seconds at the start). Precise: cuts at the exact frame by re-encoding (visually lossless).</p>
           </div>
 
           <div class="flex gap-3 mt-auto">
             <button id="cutBtn" class="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-lg font-semibold transition shadow-lg shadow-purple-600/30">
-              ✂ Cortar video
+              ✂ <span data-i18n="cut_video">Cut video</span>
             </button>
             <button id="resetBtn" class="px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">
-              Otra tarea
+              <span data-i18n="another_task">Another task</span>
             </button>
           </div>
         </div>
@@ -104,8 +126,8 @@
       <!-- Loading state -->
       <div id="modalLoading">
         <div class="loader mx-auto"></div>
-        <h2 class="text-xl font-bold mt-4">Procesando corte…</h2>
-        <p class="text-slate-400 mt-2 text-sm">Ejecutando FFmpeg con <code>-c copy</code></p>
+        <h2 class="text-xl font-bold mt-4" data-i18n="processing">Processing cut…</h2>
+        <p class="text-slate-400 mt-2 text-sm"><span data-i18n="running_ffmpeg">Running FFmpeg with</span> <code>-c copy</code></p>
       </div>
       <!-- Success state -->
       <div id="modalSuccess" class="hidden">
@@ -114,14 +136,14 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
           </svg>
         </div>
-        <h2 class="text-2xl font-bold">¡Corte completado!</h2>
+        <h2 class="text-2xl font-bold" data-i18n="cut_done">Cut completed!</h2>
         <p id="resultName" class="text-slate-400 mt-2 text-sm break-all"></p>
         <p id="resultRange" class="text-slate-500 mt-1 text-xs"></p>
         <div class="flex gap-3 mt-6">
-          <button id="viewFileBtn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition">▶ Ver archivo</button>
-          <button id="viewFolderBtn" class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">📁 Ver carpeta</button>
+          <button id="viewFileBtn" class="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg font-medium transition">▶ <span data-i18n="view_file">View file</span></button>
+          <button id="viewFolderBtn" class="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition">📁 <span data-i18n="view_folder">View folder</span></button>
         </div>
-        <button id="modalCloseBtn" class="mt-4 text-sm text-slate-400 hover:text-slate-200 underline">Cerrar</button>
+        <button id="modalCloseBtn" class="mt-4 text-sm text-slate-400 hover:text-slate-200 underline" data-i18n="close">Close</button>
       </div>
       <!-- Error state -->
       <div id="modalError" class="hidden">
@@ -130,15 +152,105 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
           </svg>
         </div>
-        <h2 class="text-2xl font-bold">Error</h2>
+        <h2 class="text-2xl font-bold" data-i18n="error">Error</h2>
         <p id="errorMsg" class="text-slate-400 mt-2 text-sm break-all"></p>
-        <button id="errorCloseBtn" class="mt-6 px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg">Cerrar</button>
+        <button id="errorCloseBtn" class="mt-6 px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg" data-i18n="close">Close</button>
       </div>
     </div>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+
+    // ---------- i18n ----------
+    const I18N = {
+      en: {
+        subtitle: 'instant lossless cuts with FFmpeg (<code>-c copy</code>)',
+        dropzone_hint: 'Drag and drop your video here',
+        or: 'or',
+        select_video: 'Select video',
+        select_range: 'Select the cut range',
+        start: 'Start',
+        end: 'End',
+        total_duration: 'Total duration:',
+        cut_duration: 'Cut duration:',
+        cut_mode: 'Cut mode',
+        mode_lossless: 'Fast (lossless)',
+        mode_precise: 'Precise (re-encodes)',
+        mode_hint: 'Fast: cuts at keyframes (may include a few extra seconds at the start). Precise: cuts at the exact frame by re-encoding (visually lossless).',
+        cut_video: 'Cut video',
+        another_task: 'Another task',
+        processing: 'Processing cut…',
+        running_ffmpeg: 'Running FFmpeg with',
+        cut_done: 'Cut completed!',
+        view_file: 'View file',
+        view_folder: 'View folder',
+        close: 'Close',
+        error: 'Error',
+        // dinámicos
+        uploading: 'Uploading video…',
+        cutting: 'Cutting video…',
+        cutting_precise: 'Cutting video (precise)…',
+        invalid_video: 'Please select a valid video file.',
+        range_too_small: 'The range is too small.',
+        upload_error: 'Upload error',
+        cut_error: 'Cut error',
+        range_from: 'From'
+      },
+      es: {
+        subtitle: 'Cortes instantáneos sin pérdida de calidad con FFmpeg (<code>-c copy</code>)',
+        dropzone_hint: 'Arrastra y suelta tu video aquí',
+        or: 'o',
+        select_video: 'Seleccionar video',
+        select_range: 'Selecciona el rango de corte',
+        start: 'Inicio',
+        end: 'Fin',
+        total_duration: 'Duración total:',
+        cut_duration: 'Duración del corte:',
+        cut_mode: 'Modo de corte',
+        mode_lossless: 'Rápido (sin pérdida)',
+        mode_precise: 'Preciso (re-codifica)',
+        mode_hint: 'Rápido: corta en keyframes (puede incluir unos segundos extra al inicio). Preciso: corta en el fotograma exacto re-codificando (visualmente sin pérdida).',
+        cut_video: 'Cortar video',
+        another_task: 'Otra tarea',
+        processing: 'Procesando corte…',
+        running_ffmpeg: 'Ejecutando FFmpeg con',
+        cut_done: '¡Corte completado!',
+        view_file: 'Ver archivo',
+        view_folder: 'Ver carpeta',
+        close: 'Cerrar',
+        error: 'Error',
+        uploading: 'Subiendo video…',
+        cutting: 'Cortando video…',
+        cutting_precise: 'Cortando video (preciso)…',
+        invalid_video: 'Selecciona un archivo de video válido.',
+        range_too_small: 'El rango es muy pequeño.',
+        upload_error: 'Error al subir',
+        cut_error: 'Error al cortar',
+        range_from: 'De'
+      }
+    };
+
+    let currentLang = 'en';
+
+    function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || key; }
+
+    function applyLang() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.innerHTML = t(el.getAttribute('data-i18n'));
+      });
+      document.documentElement.lang = currentLang;
+      const flag = $('langFlag'), label = $('langLabel');
+      if (currentLang === 'en') { flag.textContent = '🇪🇸'; label.textContent = 'ES'; }
+      else { flag.textContent = '🇬🇧'; label.textContent = 'EN'; }
+    }
+
+    $('langBtn').addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'es' : 'en';
+      applyLang();
+    });
+
+    // ---------- refs ----------
     const dropzone = $('dropzone');
     const fileInput = $('fileInput');
     const selectBtn = $('selectBtn');
@@ -229,17 +341,17 @@
 
     async function handleFile(file) {
       if (!file.type.startsWith('video/') && !/\.(mp4|mkv|mov|avi|webm|flv|mpg|mpeg|m4v|ts)$/i.test(file.name)) {
-        alert('Selecciona un archivo de video válido.');
+        alert(t('invalid_video'));
         return;
       }
       overlay.classList.remove('hidden');
-      showLoadingState('Subiendo video…');
+      showLoadingState(t('uploading'));
       const fd = new FormData();
       fd.append('video', file);
       try {
         const res = await fetch('/upload', { method: 'POST', body: fd });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al subir');
+        if (!res.ok) throw new Error(data.error || t('upload_error'));
         state.path = data.path;
         state.name = data.name;
         state.duration = data.duration;
@@ -272,17 +384,18 @@
 
     cutBtn.addEventListener('click', async () => {
       setSliderFromInput();
-      if (state.end - state.start < 0.1) { alert('El rango es muy pequeño.'); return; }
+      if (state.end - state.start < 0.1) { alert(t('range_too_small')); return; }
+      const mode = document.querySelector('input[name="cutMode"]:checked').value;
       overlay.classList.remove('hidden');
-      showLoadingState('Cortando video…');
+      showLoadingState(mode === 'precise' ? t('cutting_precise') : t('cutting'));
       try {
         const res = await fetch('/cut', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ path: state.path, start: state.start, end: state.end })
+          body: JSON.stringify({ path: state.path, start: state.start, end: state.end, mode })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al cortar');
+        if (!res.ok) throw new Error(data.error || t('cut_error'));
         state.outputPath = data.output_path;
         state.outputName = data.output_name;
         showSuccessState(data);
@@ -302,7 +415,7 @@
       modalSuccess.classList.remove('hidden');
       modalError.classList.add('hidden');
       $('resultName').textContent = data.output_name;
-      $('resultRange').textContent = `De ${fmt(data.start)} a ${fmt(data.end)}`;
+      $('resultRange').textContent = `${t('range_from')} ${fmt(data.start)} → ${fmt(data.end)}`;
     }
     function showErrorState(msg) {
       modalLoading.classList.add('hidden');
@@ -318,7 +431,13 @@
     $('errorCloseBtn').addEventListener('click', hideOverlay);
 
     resetBtn.addEventListener('click', async () => {
-      await fetch('/clean', {method:'POST'}).catch(()=>{});
+      if (state.path) {
+        await fetch('/clean', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: state.path })
+        }).catch(()=>{});
+      }
       state = { path: null, name: null, duration: 0, start: 0, end: 0, outputPath: null, outputName: null };
       video.src = '';
       editor.classList.add('hidden');
@@ -326,6 +445,8 @@
       hideOverlay();
     });
 
+    // init
+    applyLang();
     updateTrackVisuals();
   </script>
 </body>

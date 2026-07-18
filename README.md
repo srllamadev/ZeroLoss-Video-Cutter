@@ -1,4 +1,4 @@
-# VideosCortador
+# ZeroLoss-Video-Cutter
 
 App local con interfaz web para **cortar videos sin pérdida de calidad** usando FFmpeg (`-c copy`). Sube un video, elige los puntos de inicio y fin, y genera el corte junto al archivo original.
 
@@ -14,7 +14,7 @@ App local con interfaz web para **cortar videos sin pérdida de calidad** usando
 1. **Clonar el repo**
 ```bash
 git clone https://github.com/srllamadev/ZeroLoss-Video-Cutter.git
-cd videoscortador
+cd ZeroLoss-Video-Cutter
 ```
 
 2. **Instalar FFmpeg**

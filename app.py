@@ -26,10 +26,13 @@ def ffprobe_duration(path: str) -> float:
 
 
 def autoincrement_name(directory: str, base: str, ext: str) -> str:
-    """Genera un nombre `<base>_cut_N<ext>` autoincrementado sin sobrescribir."""
+    """Genera un nombre `<base>_N<ext>` autoincrementado sin sobrescribir.
+    Si `video.mp4` no existe, lo usa. Si existe, prueba `video_1.mp4`, etc."""
+    if not os.path.exists(os.path.join(directory, f"{base}{ext}")):
+        return f"{base}{ext}"
     n = 1
     while True:
-        candidate = f"{base}_cut_{n}{ext}"
+        candidate = f"{base}_{n}{ext}"
         if not os.path.exists(os.path.join(directory, candidate)):
             return candidate
         n += 1
@@ -84,6 +87,11 @@ def cut():
     src_path = data.get("path")
     start = parse_time_seconds(data.get("start", 0))
     end = parse_time_seconds(data.get("end", 0))
+    # mode: "lossless" (rapido, -c copy, calado a keyframe) o
+    #       "precise"  (re-codifica, fotograma exacto, visualmente sin perdida)
+    mode = (data.get("mode") or "lossless").lower()
+    if mode not in ("lossless", "precise"):
+        mode = "lossless"
 
     if not src_path or not os.path.exists(src_path):
         return jsonify({"error": "Archivo de origen no encontrado."}), 400
@@ -96,21 +104,35 @@ def cut():
     # Quitamos el uuid que añadimos al guardar
     if "_" in base:
         base = base.split("_", 1)[1] if "_" in base else base
-    # Si el upload se hizo en uploads/ y el usuario subió su propio archivo,
-    # guardamos el corte en uploads/ junto al original tal cual exige el requisito
-    # "misma ruta/carpeta que el video original".
     out_name = autoincrement_name(directory, f"{base}", ext)
     out_path = os.path.join(directory, out_name)
 
-    cmd = [
-        "ffmpeg", "-y",
-        "-ss", f"{start:.3f}",
-        "-to", f"{end:.3f}",
-        "-i", src_path,
-        "-c", "copy",
-        "-avoid_negative_ts", "1",
-        out_path,
-    ]
+    if mode == "lossless":
+        # Rapido: seek de entrada al keyframe <= start. El inicio real
+        # puede ser ANTES del start solicitado (limite de -c copy).
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", f"{start:.3f}",
+            "-to", f"{end:.3f}",
+            "-i", src_path,
+            "-c", "copy",
+            "-avoid_negative_ts", "1",
+            out_path,
+        ]
+    else:
+        # Preciso: output seeking, re-codifica video (CRF 18 = visualmente
+        # sin perdida) y copia audio. Corta en el fotograma exacto.
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", src_path,
+            "-ss", f"{start:.3f}",
+            "-to", f"{end:.3f}",
+            "-c:v", "libx264", "-crf", "18", "-preset", "veryfast",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "copy",
+            "-avoid_negative_ts", "1",
+            out_path,
+        ]
 
     try:
         proc = subprocess.run(
@@ -127,20 +149,13 @@ def cut():
     except FileNotFoundError:
         return jsonify({"error": "FFmpeg no está instalado en el sistema."}), 500
 
-    # El corte fue exitoso: eliminamos el original de uploads/
-    # para no duplicar espacio en disco. Solo queda el recortado.
-    try:
-        if os.path.exists(src_path) and os.path.abspath(src_path) != os.path.abspath(out_path):
-            os.remove(src_path)
-    except OSError:
-        pass
-
     return jsonify({
         "output_path": out_path,
         "output_name": out_name,
         "directory": directory,
         "start": start,
         "end": end,
+        "mode": mode,
     })
 
 
@@ -183,14 +198,15 @@ def open_folder():
 
 @app.route("/clean", methods=["POST"])
 def clean():
-    """Limpia los archivos temporales de la carpeta uploads."""
-    try:
-        for fn in os.listdir(UPLOAD_DIR):
-            fp = os.path.join(UPLOAD_DIR, fn)
-            if os.path.isfile(fp):
-                os.remove(fp)
-    except Exception:
-        pass
+    """Elimina solo el archivo fuente del trabajo actual.
+    Body: {"path": "<ruta al original>"}. Los recortes se conservan."""
+    data = request.get_json(silent=True) or {}
+    src = data.get("path")
+    if src and os.path.exists(src):
+        try:
+            os.remove(src)
+        except OSError:
+            pass
     return jsonify({"ok": True})
 
 

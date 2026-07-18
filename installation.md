@@ -1,6 +1,6 @@
 # Instalación
 
-Guía directa para desplegar **VideosCortador** localmente. Requisito común: **Python 3.9+** y **FFmpeg** (incluye `ffmpeg` y `ffprobe`).
+Guía directa para desplegar **ZeroLoss-Video-Cutter** localmente. Requisito común: **Python 3.9+** y **FFmpeg** (incluye `ffmpeg` y `ffprobe`).
 
 ---
 
@@ -18,7 +18,7 @@ O descarga desde https://www.gyan.dev/ffmpeg/builds/, extrae y agrega la carpeta
 ### 3. Clonar el repo
 ```bat
 git clone https://github.com/srllamadev/ZeroLoss-Video-Cutter.git
-cd videoscortador
+cd ZeroLoss-Video-Cutter
 ```
 
 ### 4. Crear entorno virtual e instalar dependencias
@@ -58,7 +58,7 @@ sudo apt install -y ffmpeg
 ### 3. Clonar el repo
 ```bash
 git clone https://github.com/srllamadev/ZeroLoss-Video-Cutter.git
-cd videoscortador
+cd ZeroLoss-Video-Cutter
 ```
 
 ### 4. Crear entorno virtual e instalar dependencias
@@ -93,7 +93,7 @@ brew install ffmpeg
 ### 3. Clonar el repo
 ```bash
 git clone https://github.com/srllamadev/ZeroLoss-Video-Cutter.git
-cd videoscortador
+cd ZeroLoss-Video-Cutter
 ```
 
 ### 4. Crear entorno virtual e instalar dependencias
